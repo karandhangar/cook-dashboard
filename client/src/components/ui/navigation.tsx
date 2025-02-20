@@ -6,7 +6,8 @@ import {
   User,
   CalendarRange,
   LogOut,
-  Menu as MenuIcon,
+  Users,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,8 @@ const NAV_ITEMS = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
   { icon: User, label: "Profile", href: "/profile" },
   { icon: CalendarRange, label: "Menu", href: "/menu" },
+  { icon: Users, label: "Customers", href: "/customers" },
+  { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
 export default function Navigation() {
