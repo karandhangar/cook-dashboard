@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Users, UtensilsCrossed, CalendarRange } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
+import { type Dish } from "@shared/schema";
 
 const mockChartData = [
   { name: "Mon", orders: 4 },
@@ -14,7 +15,7 @@ const mockChartData = [
 ];
 
 export default function Dashboard() {
-  const { data: dishes, isLoading: dishesLoading } = useQuery({
+  const { data: dishes = [], isLoading: dishesLoading } = useQuery<Dish[]>({
     queryKey: ["/api/dishes"],
   });
 
@@ -40,7 +41,7 @@ export default function Dashboard() {
             <UtensilsCrossed className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dishes?.length || 0}</div>
+            <div className="text-2xl font-bold">{dishes.length}</div>
           </CardContent>
         </Card>
         <Card>

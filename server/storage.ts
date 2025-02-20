@@ -1,3 +1,16 @@
+export interface IStorage {
+  sessionStore: session.Store;
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(insertUser: User): Promise<User>;
+  updateUser(id: number, data: UpdateUser): Promise<User>;
+  getDishes(userId: number): Promise<Dish[]>;
+  createDish(userId: number, data: InsertDish): Promise<Dish>;
+  deleteDish(userId: number, id: number): Promise<void>;
+  getMenus(userId: number): Promise<Menu[]>;
+  createMenu(userId: number, data: InsertMenu): Promise<Menu>;
+}
+
 import { IStorage } from "./storage";
 import { User, UpdateUser, Dish, Menu, InsertDish, InsertMenu } from "@shared/schema";
 import session from "express-session";
@@ -59,7 +72,16 @@ export class MemStorage implements IStorage {
 
   async createDish(userId: number, data: InsertDish): Promise<Dish> {
     const id = this.currentDishId++;
-    const dish: Dish = { ...data, id, userId };
+    const dish: Dish = {
+      id,
+      userId,
+      name: data.name,
+      description: data.description ?? null,
+      price: data.price,
+      image: data.image ?? null,
+      isSpecial: data.isSpecial ?? false,
+      availableUntil: data.availableUntil ? new Date(data.availableUntil) : null,
+    };
     this.dishes.set(id, dish);
     return dish;
   }
