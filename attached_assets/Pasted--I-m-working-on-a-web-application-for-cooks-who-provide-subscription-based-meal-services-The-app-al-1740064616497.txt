@@ -1,0 +1,24 @@
+"I’m working on a web application for cooks who provide subscription-based meal services. The app allows cooks to manage their profile, weekly menus, and dishes effectively. Key features include:
+
+Profile Management :
+A profile page where cooks can view their details (name, email, phone, address, bio, cuisine specialization, experience).
+An 'Edit Profile' page with fields to update personal information and upload or change a profile picture.
+Menu Management :
+A 'Menus Page' where cooks can create and manage their weekly menus.
+A 'Dish Pool' section to add, edit, and delete dishes (including name, description, price, and image).
+A weekly schedule grid (Monday to Sunday for 4 weeks) to assign dishes from the Dish Pool to specific days.
+Buttons at the bottom of the Menus Page: 'Save Menu' (to save changes and redirect to the dashboard) and 'Clear All' (to reset the page).
+Dashboard :
+Displays an overview of recent activities, statistics (e.g., total dishes, active subscriptions), and quick action buttons.
+Design and Layout :
+A clean, modern UI with a sidebar for navigation (Dashboard, Profile, Menus, Orders, Customers, Settings).
+Custom CSS styling without Bootstrap, using Flexbox and Grid for responsive layouts.
+Consistent button styles (hover effects, colors, padding) across the app.
+Additional Features :
+A footer with company logo, links, social media icons, and copyright information.
+Interactive components like modals for adding/editing dishes and assigning them to days in the schedule.
+Button Functionality :
+All buttons in the application should be fully functional:
+Navigation buttons (e.g., in the sidebar or action buttons) should take users to related pages (e.g., Dashboard, Profile, Menus).
+Action buttons (e.g., Save, Clear All, Edit Profile) should either trigger forms, display popup windows, or perform actions like saving data or resetting the page.
+The goal is to build a user-friendly interface that helps cooks efficiently organize their subscription-based meal plans while maintaining a professional look and feel. Please help me refine or expand any part of this concept if needed."
