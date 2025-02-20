@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, PgArray, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, PgArray, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -23,13 +23,16 @@ export const dishes = pgTable("dishes", {
   description: text("description"),
   price: text("price").notNull(),
   image: text("image"),
+  isSpecial: boolean("is_special").default(false),
+  availableUntil: timestamp("available_until"),
 });
 
 export const menus = pgTable("menus", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   weekNumber: integer("week_number").notNull(),
-  dishes: text("dishes").array(),
+  day: text("day").notNull(),
+  dishId: integer("dish_id").notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -43,14 +46,20 @@ export const updateUserSchema = createInsertSchema(users).omit({
   password: true,
 });
 
-export const insertDishSchema = createInsertSchema(dishes).omit({
-  id: true,
-  userId: true,
-});
+export const insertDishSchema = createInsertSchema(dishes)
+  .omit({
+    id: true,
+    userId: true,
+  })
+  .extend({
+    isSpecial: z.boolean().optional(),
+    availableUntil: z.string().optional(),
+  });
 
 export const insertMenuSchema = z.object({
   weekNumber: z.number(),
-  dishes: z.array(z.string()),
+  day: z.string(),
+  dishId: z.number(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

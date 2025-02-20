@@ -5,6 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,17 @@ import { insertDishSchema, type InsertDish, type Dish } from "@shared/schema";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useState } from "react";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const WEEKS = [1, 2, 3, 4];
@@ -32,9 +44,18 @@ const FOOD_IMAGES = [
   "https://images.unsplash.com/photo-1560963806-394647f30329",
 ];
 
+type Menu = {
+  id: number;
+  weekNumber: number;
+  day: string;
+  dishId: number;
+};
+
 export default function Menu() {
   const { toast } = useToast();
-  const { data: dishes, isLoading } = useQuery<Dish[]>({ queryKey: ["/api/dishes"] });
+  const [selectedCell, setSelectedCell] = useState<{ week: number; day: string } | null>(null);
+  const { data: dishes, isLoading: dishesLoading } = useQuery<Dish[]>({ queryKey: ["/api/dishes"] });
+  const { data: menus, isLoading: menusLoading } = useQuery<Menu[]>({ queryKey: ["/api/menus"] });
 
   const form = useForm<InsertDish>({
     resolver: zodResolver(insertDishSchema),
@@ -43,6 +64,8 @@ export default function Menu() {
       description: "",
       price: "",
       image: FOOD_IMAGES[Math.floor(Math.random() * FOOD_IMAGES.length)],
+      isSpecial: false,
+      availableUntil: undefined,
     },
   });
 
@@ -61,6 +84,21 @@ export default function Menu() {
     },
   });
 
+  const addToMenuMutation = useMutation({
+    mutationFn: async (data: { weekNumber: number; day: string; dishId: number }) => {
+      const res = await apiRequest("POST", "/api/menus", data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/menus"] });
+      setSelectedCell(null);
+      toast({
+        title: "Menu updated",
+        description: "The dish has been added to the menu.",
+      });
+    },
+  });
+
   const deleteDishMutation = useMutation({
     mutationFn: async (id: number) => {
       await apiRequest("DELETE", `/api/dishes/${id}`);
@@ -74,13 +112,19 @@ export default function Menu() {
     },
   });
 
-  if (isLoading) {
+  if (dishesLoading || menusLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
+
+  const getDishForCell = (week: number, day: string) => {
+    const menuItem = menus?.find((m) => m.weekNumber === week && m.day === day);
+    if (!menuItem) return null;
+    return dishes?.find((d) => d.id === menuItem.dishId);
+  };
 
   return (
     <div className="p-8">
@@ -125,7 +169,7 @@ export default function Menu() {
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea {...field} />
+                        <Textarea {...field} value={field.value ?? ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -144,6 +188,43 @@ export default function Menu() {
                     </FormItem>
                   )}
                 />
+                <div className="flex items-center gap-2">
+                  <FormField
+                    control={form.control}
+                    name="isSpecial"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center gap-2">
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel>Special/Limited Time Dish</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {form.watch("isSpecial") && (
+                  <FormField
+                    control={form.control}
+                    name="availableUntil"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Available Until</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="datetime-local"
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
                 <FormField
                   control={form.control}
                   name="image"
@@ -151,14 +232,16 @@ export default function Menu() {
                     <FormItem>
                       <FormLabel>Image URL</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} value={field.value ?? ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 <Button type="submit" className="w-full" disabled={createDishMutation.isPending}>
-                  {createDishMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {createDishMutation.isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   Create Dish
                 </Button>
               </form>
@@ -171,7 +254,7 @@ export default function Menu() {
         {dishes?.map((dish) => (
           <Card key={dish.id}>
             <img
-              src={dish.image}
+              src={dish.image || ""}
               alt={dish.name}
               className="w-full h-48 object-cover rounded-t-lg"
             />
@@ -180,6 +263,11 @@ export default function Menu() {
                 <div>
                   <h3 className="font-semibold">{dish.name}</h3>
                   <p className="text-sm text-muted-foreground">${dish.price}</p>
+                  {dish.isSpecial && (
+                    <span className="inline-block px-2 py-1 text-xs rounded-full bg-primary/10 text-primary">
+                      Special until {format(new Date(dish.availableUntil!), "MMM d, yyyy")}
+                    </span>
+                  )}
                 </div>
                 <Button
                   variant="ghost"
@@ -216,13 +304,66 @@ export default function Menu() {
                 {WEEKS.map((week) => (
                   <tr key={week} className="border-t">
                     <td className="p-2 font-medium">Week {week}</td>
-                    {DAYS.map((day) => (
-                      <td key={day} className="p-2">
-                        <Button variant="outline" className="w-full h-20">
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    ))}
+                    {DAYS.map((day) => {
+                      const dish = getDishForCell(week, day);
+                      return (
+                        <td key={day} className="p-2">
+                          {dish ? (
+                            <div className="p-2 bg-accent rounded-lg">
+                              <p className="font-medium">{dish.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                ${dish.price}
+                              </p>
+                            </div>
+                          ) : (
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className="w-full h-20"
+                                  onClick={() => setSelectedCell({ week, day })}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Add Dish to Menu</DialogTitle>
+                                  <DialogDescription>
+                                    Select a dish for Week {week}, {day}
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <Select
+                                  onValueChange={(value) => {
+                                    if (selectedCell) {
+                                      addToMenuMutation.mutate({
+                                        weekNumber: selectedCell.week,
+                                        day: selectedCell.day,
+                                        dishId: parseInt(value),
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a dish" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {dishes?.map((dish) => (
+                                      <SelectItem
+                                        key={dish.id}
+                                        value={dish.id.toString()}
+                                      >
+                                        {dish.name} - ${dish.price}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </DialogContent>
+                            </Dialog>
+                          )}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>

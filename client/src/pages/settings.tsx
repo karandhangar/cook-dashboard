@@ -10,6 +10,7 @@ import {
   Lock,
   Building,
   Plus,
+  Ruler,
 } from "lucide-react";
 
 export default function Settings() {
@@ -91,6 +92,27 @@ export default function Settings() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="delivery-radius">Delivery Radius (km)</Label>
+                <span className="text-sm text-muted-foreground">5 km</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <Ruler className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="delivery-radius"
+                  type="range"
+                  min="1"
+                  max="50"
+                  defaultValue="5"
+                  className="w-full"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Set the maximum distance you're willing to deliver meals
+              </p>
+            </div>
+
             <div className="flex items-center justify-between">
               <Label htmlFor="auto-accept">Auto-accept Orders</Label>
               <Switch id="auto-accept" />
